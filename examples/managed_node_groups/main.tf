@@ -5,6 +5,7 @@ terraform {
 provider "aws" {
   version = ">= 2.28.1"
   region  = var.region
+  profile = "cicd"
 }
 
 provider "random" {
@@ -52,33 +53,25 @@ resource "random_string" "suffix" {
 }
 
 module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 2.6"
+  source = "github.com/youse-seguradora/terraform-aws-vpc"
 
-  name                 = "test-vpc"
-  cidr                 = "172.16.0.0/16"
-  azs                  = data.aws_availability_zones.available.names
-  private_subnets      = ["172.16.1.0/24", "172.16.2.0/24", "172.16.3.0/24"]
-  public_subnets       = ["172.16.4.0/24", "172.16.5.0/24", "172.16.6.0/24"]
-  enable_nat_gateway   = true
-  single_nat_gateway   = true
-  enable_dns_hostnames = true
+  name                   = "test-vpc"
+  cidr                   = "172.16.0.0/16"
+  azs                    = data.aws_availability_zones.available.names
+  compute_public_subnets = ["172.16.1.0/24", "172.16.2.0/24", "172.16.3.0/24"]
 
-  public_subnet_tags = {
+
+  compute_public_subnet_tags = {
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
     "kubernetes.io/role/elb"                      = "1"
   }
 
-  private_subnet_tags = {
-    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
-    "kubernetes.io/role/internal-elb"             = "1"
-  }
 }
 
 module "eks" {
   source       = "../.."
   cluster_name = local.cluster_name
-  subnets      = module.vpc.private_subnets
+  subnets      = module.vpc.public_subnets
 
   tags = {
     Environment = "test"
@@ -88,9 +81,11 @@ module "eks" {
 
   vpc_id = module.vpc.vpc_id
 
+  # manage_aws_auth = false
+
   node_groups_defaults = {
     ami_type  = "AL2_x86_64"
-    disk_size = 50
+    disk_size = 20
   }
 
   node_groups = {
@@ -110,8 +105,4 @@ module "eks" {
       }
     }
   }
-
-  map_roles    = var.map_roles
-  map_users    = var.map_users
-  map_accounts = var.map_accounts
 }
