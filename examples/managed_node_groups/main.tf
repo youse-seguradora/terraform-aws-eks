@@ -5,7 +5,7 @@ terraform {
 provider "aws" {
   version = ">= 2.28.1"
   region  = var.region
-  profile = "cicd"
+  # profile = "cicd"
 }
 
 provider "random" {
@@ -105,8 +105,4 @@ module "eks" {
       }
     }
   }
-
-  map_roles    = var.map_roles
-  map_users    = var.map_users
-  map_accounts = var.map_accounts
 }
