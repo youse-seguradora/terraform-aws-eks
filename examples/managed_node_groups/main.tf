@@ -67,11 +67,47 @@ module "vpc" {
   }
 
 }
+module "security_group" {
+  source = "git@github.com:youse-seguradora/terraform-aws-security-group.git"
+
+  name        = "test-sg"
+  description = "security group"
+  vpc_id      = module.vpc.vpc_id
+
+
+  ingress_with_cidr_blocks = [
+    {
+      from_port   = 443
+      to_port     = 443
+      protocol    = "tcp"
+      description = "Service name"
+      cidr_blocks = "10.0.0.0/8"
+    },
+  ]
+
+  egress_with_cidr_blocks = [
+    {
+      from_port   = 0
+      to_port     = 0
+      protocol    = -1
+      description = "Allow cluster egress access to the Internet."
+      cidr_blocks = "0.0.0.0/0"
+    },
+  ]
+
+  tags = {
+    Service     = "test-basic"
+    Managed_by  = "Terraform"
+    Environment = "test"
+  }
+
+}
 
 module "eks" {
   source       = "../.."
   cluster_name = local.cluster_name
   subnets      = module.vpc.public_subnets
+  cluster_security_group_id = module.security_group.this_security_group_id
 
   tags = {
     Environment = "test"
