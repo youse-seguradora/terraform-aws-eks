@@ -44,7 +44,7 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
-  cluster_name = "test-eks-${random_string.suffix.result}"
+  cluster_name = "test-eks"
 }
 
 resource "random_string" "suffix" {
@@ -104,9 +104,9 @@ module "security_group" {
 }
 
 module "eks" {
-  source       = "../.."
-  cluster_name = local.cluster_name
-  subnets      = module.vpc.public_subnets
+  source                    = "../.."
+  cluster_name              = local.cluster_name
+  subnets                   = module.vpc.public_subnets
   cluster_security_group_id = module.security_group.this_security_group_id
 
   tags = {
@@ -126,6 +126,7 @@ module "eks" {
 
   node_groups = {
     example = {
+      node_group_name  = "test"
       desired_capacity = 1
       max_capacity     = 10
       min_capacity     = 1

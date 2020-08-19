@@ -42,3 +42,4 @@ variable "ng_depends_on" {
   type        = any
   default     = null
 }
+
