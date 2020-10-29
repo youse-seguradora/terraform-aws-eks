@@ -72,7 +72,7 @@ module "vpc" {
 
 }
 module "security_group" {
-  source = "git@github.com:youse-seguradora/terraform-aws-security-group.git"
+  source = "https://github.com/youse-seguradora/terraform-aws-security-group.git"
 
   name        = "test-sg"
   description = "security group"
