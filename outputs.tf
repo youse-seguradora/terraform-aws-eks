@@ -1,5 +1,5 @@
 output "cluster_id" {
-  description = "The name/id of the EKS cluster."
+  description = "The name/id of the EKS cluster. Will block on cluster creation until the cluster is really ready"
   value       = element(concat(aws_eks_cluster.this.*.id, list("")), 0)
   # So that calling plans wait for the cluster to be available before attempting
   # to use it. They will not need to duplicate this null_resource
@@ -58,7 +58,12 @@ output "cluster_primary_security_group_id" {
 
 output "cloudwatch_log_group_name" {
   description = "Name of cloudwatch log group created"
-  value       = aws_cloudwatch_log_group.this[*].name
+  value       = element(concat(aws_cloudwatch_log_group.this[*].name, list("")), 0)
+}
+
+output "cloudwatch_log_group_arn" {
+  description = "Arn of cloudwatch log group created"
+  value       = element(concat(aws_cloudwatch_log_group.this[*].arn, list("")), 0)
 }
 
 output "kubeconfig" {

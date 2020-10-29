@@ -31,6 +31,7 @@ locals {
   )
 
   ec2_principal = "ec2.${data.aws_partition.current.dns_suffix}"
+  sts_principal = "sts.${data.aws_partition.current.dns_suffix}"
 
   policy_arn_prefix = "arn:${data.aws_partition.current.partition}:iam::aws:policy"
   workers_group_defaults_defaults = {
@@ -52,7 +53,7 @@ locals {
     root_volume_size              = "100"                       # root volume size of workers instances.
     root_volume_type              = "gp2"                       # root volume type of workers instances, can be 'standard', 'gp2', or 'io1'
     root_iops                     = "0"                         # The amount of provisioned IOPS. This must be set with a volume_type of "io1".
-    key_name                      = ""                          # The key name that should be used for the instances in the autoscaling group
+    key_name                      = ""                          # The key pair name that should be used for the instances in the autoscaling group
     pre_userdata                  = ""                          # userdata to pre-append to the default userdata.
     userdata_template_file        = ""                          # alternate template to use for userdata
     userdata_template_extra_args  = {}                          # Additional arguments to use when expanding the userdata template file
@@ -69,6 +70,7 @@ locals {
     iam_role_id                   = "local.default_iam_role_id" # A custom IAM role id. Incompatible with iam_instance_profile_name.  Literal local.default_iam_role_id will never be used but if iam_role_id is not set, the local.default_iam_role_id interpolation will be used.
     suspended_processes           = ["AZRebalance"]             # A list of processes to suspend. i.e. ["AZRebalance", "HealthCheck", "ReplaceUnhealthy"]
     target_group_arns             = null                        # A list of Application LoadBalancer (ALB) target group ARNs to be associated to the autoscaling group
+    load_balancers                = null                        # A list of Classic LoadBalancer (CLB)'s name to be associated to the autoscaling group
     enabled_metrics               = []                          # A list of metrics to be collected i.e. ["GroupMinSize", "GroupMaxSize", "GroupDesiredCapacity"]
     placement_group               = null                        # The name of the placement group into which to launch the instances, if any.
     service_linked_role_arn       = ""                          # Arn of custom service linked role that Auto Scaling group will use. Useful when you have encrypted EBS
@@ -144,10 +146,10 @@ locals {
 
   kubeconfig = var.create_eks ? templatefile("${path.module}/templates/kubeconfig.tpl", {
     kubeconfig_name                   = local.kubeconfig_name
-    endpoint                          = aws_eks_cluster.this[0].endpoint
-    cluster_auth_base64               = aws_eks_cluster.this[0].certificate_authority[0].data
+    endpoint                          = coalescelist(aws_eks_cluster.this[*].endpoint, [""])[0]
+    cluster_auth_base64               = coalescelist(aws_eks_cluster.this[*].certificate_authority[0].data, [""])[0]
     aws_authenticator_command         = var.kubeconfig_aws_authenticator_command
-    aws_authenticator_command_args    = length(var.kubeconfig_aws_authenticator_command_args) > 0 ? var.kubeconfig_aws_authenticator_command_args : ["token", "-i", aws_eks_cluster.this[0].name]
+    aws_authenticator_command_args    = length(var.kubeconfig_aws_authenticator_command_args) > 0 ? var.kubeconfig_aws_authenticator_command_args : ["token", "-i", coalescelist(aws_eks_cluster.this[*].name, [""])[0]]
     aws_authenticator_additional_args = var.kubeconfig_aws_authenticator_additional_args
     aws_authenticator_env_variables   = var.kubeconfig_aws_authenticator_env_variables
   }) : ""
