@@ -68,7 +68,7 @@ jobs:
       image: hashicorp/terraform:0.12.9
     steps:
       - uses: actions/checkout@master
-      - name: Validate Code
+      - name: Validate  Code
         env:
           AWS_REGION: "us-east-1"
           TF_WARN_OUTPUT_ERRORS: 1
