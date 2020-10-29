@@ -21,22 +21,18 @@ jobs:
 
   docs:
     name: Docs
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-python@v2
-      - name: Install terraform-docs
+      - name: Install Deps
         run: |
-          # Get the download url of the latest version of terraform-docs
-          tf_docs_download_url=$(curl -s https://api.github.com/repos/terraform-docs/terraform-docs/releases/latest | jq -rc '.assets[] | select( .name | contains("linux-amd64")).browser_download_url')
-          mkdir -p $GITHUB_WORKSPACE/bin
-          curl -Lo $GITHUB_WORKSPACE/bin/terraform-docs $tf_docs_download_url
-          chmod +x $GITHUB_WORKSPACE/bin/terraform-docs
-          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          # Temporary fix for https://github.com/actions/virtual-environments/issues/1811
+          brew untap local/homebrew-openssl
+          brew untap local/homebrew-python2
+          brew update
+          brew install pre-commit terraform-docs terraform
       - name: Check Docs
-        uses: pre-commit/action@v2.0.0
-        with:
-          extra_args: --show-diff-on-failure --all-files terraform_docs
+        run: pre-commit run --show-diff-on-failure --all-files terraform_docs
 
   validate:
     name: Validate
@@ -47,12 +43,12 @@ jobs:
       - uses: actions/checkout@master
       - name: Validate Code
         env:
-          AWS_REGION: 'us-east-1'
+          AWS_REGION: "us-east-1"
           TF_WARN_OUTPUT_ERRORS: 1
-          TF_VAR_vpc_id: 'vpc-123456'
+          TF_VAR_vpc_id: "vpc-123456"
           TF_VAR_subnets: '["subnet-12345a"]'
-          TF_VAR_workers_ami_id: 'ami-123456'
-          TF_VAR_cluster_name: 'test_cluster'
+          TF_VAR_workers_ami_id: "ami-123456"
+          TF_VAR_cluster_name: "test_cluster"
         run: |
           terraform init
           terraform validate
@@ -74,7 +70,7 @@ jobs:
       - uses: actions/checkout@master
       - name: Validate Code
         env:
-          AWS_REGION: 'us-east-1'
+          AWS_REGION: "us-east-1"
           TF_WARN_OUTPUT_ERRORS: 1
         run: |
           sed -i -e 's/>=/=/' -e 's/ \(\d\+\.\d\+\)"/ \1.0"/' versions.tf
