@@ -105,7 +105,7 @@ resource "aws_security_group_rule" "cluster_https_worker_ingress" {
   description              = "Allow pods to communicate with the EKS cluster API."
   protocol                 = "tcp"
   security_group_id        = local.cluster_security_group_id
-  source_security_group_id = local.worker_security_group_id
+  source_security_group_id = "${var.account_id}/${local.worker_security_group_id}"
   from_port                = 443
   to_port                  = 443
   type                     = "ingress"

@@ -338,3 +338,7 @@ variable "cluster_encryption_config" {
   }))
   default = []
 }
+
+variable "account_id" {
+  type = string
+}
